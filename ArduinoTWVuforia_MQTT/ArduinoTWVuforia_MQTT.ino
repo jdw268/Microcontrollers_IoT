@@ -1,9 +1,13 @@
+//This program uses MQTT to send and recieve information about an LED. 
+
 #include <ESP8266WiFi.h> // Enables the ESP8266 to connect to the local network (via WiFi)
 #include <PubSubClient.h> // Allows us to connect to, and publish to the MQTT broker
 
+
 const int buttonPinStatus = D7; //pin to read from push button - input pin
 const int ledOnOff = D8;  //pin to write to for LED - output pin
-const int ledVoltage = D2;  //reads voltage on LED
+const int ledVoltagePin = D2;  //reads input voltage to LED - input pin
+const int supplyVoltagePin = D3; //read supply voltage to microcontrol - input pin
 
 //global to keep track if led on or off - initialize to zero
 int LEDStatus;
@@ -11,7 +15,9 @@ int LEDStatus;
 
 // MQTT broker setup
 const char* mqtt_server = "192.168.1.81";  //this is on RPi
-const char* mqtt_topicLED = "TWTestLED";  //this topic is also set on TW server
+const char* mqtt_topicLED = "TWTestLED";  //this topic is related to the LED status
+const char* mqtt_topicLEDVoltage = "LEDVoltage"; //this topic is used for NodeMCU to publish voltages to TW
+const char* mqtt_topicSupplyVoltage = "SupplyVoltage"; //this topic is used for NodeMCU to publish voltages to TW
 
 // The client id identifies the ESP8266 device
 const char* clientID = "ESP8266";
@@ -40,11 +46,17 @@ void receivedMessage(char* topic, byte* payload, unsigned int length) {
     
     //update the ledstatus variable
     LEDStatus = 1;
+
+    //update ThingWorx on supply voltage and LED voltage too
+   sendVoltageUpdate();
     
    } else if (((char)payload[0] == '0')&& (LEDStatus != 0)){
     //update the LED to be HIGH
     digitalWrite(ledOnOff, LOW);  
     LEDStatus = 0;
+
+    //update ThingWorx on supply voltage and LED voltage too
+   sendVoltageUpdate();
     
   } else{
     Serial.println("Invalid input or redundant input");
@@ -76,7 +88,10 @@ void setup() {
   //set the led to be off to start
   digitalWrite(ledOnOff, LOW);
 
-//  pinMode(ledVoltage, INPUT);  //reads led voltage - pin D8
+  //set pinmodes for voltages
+  pinMode(supplyVoltagePin, INPUT);  //D2
+  pinMode(ledVoltagePin, INPUT);  //D3
+  
   //attachInterrupt(ledVoltage, sendUpdate, CHANGE);
 
   //connect board to wifi call with 10 second timeout
@@ -149,9 +164,37 @@ delay(2000);
      //update TW with change
       client.publish(mqtt_topicLED, "1");
       }
+
+   //update ThingWorx on supply voltage and LED voltage too
+   sendVoltageUpdate();
+   
 } //end digitalRead if   
 
 }  //end loop
+
+
+//This is a helper method to send ThingWorx voltage information with every change on the LED
+void sendVoltageUpdate(){
+  Serial.println("sending voltage update to TW");
+  int supplyVoltage = digitalRead(supplyVoltagePin);
+  int ledVoltage = digitalRead(ledVoltagePin);
+  
+  //fake output b/c only one analog pin
+  if(supplyVoltage == 1){
+    client.publish(mqtt_topicSupplyVoltage, "3.3V");
+    }
+   else{
+    client.publish(mqtt_topicSupplyVoltage, "0.0V");
+   }
+   
+   if(ledVoltage == 1){
+    client.publish(mqtt_topicLEDVoltage, "3.3V");
+    }
+   else{
+     client.publish(mqtt_topicLEDVoltage,  "0.0V");
+   }
+   
+  }
 /*
 void sendUpdate(){
   int convert = digitalRead(ledVoltage);
