@@ -7,6 +7,7 @@ const int ledVoltage = D2;  //reads voltage on LED
 
 //global to keep track if led on or off - initialize to zero
 int LEDStatus;
+//int TWStatus;
 
 // MQTT broker setup
 const char* mqtt_server = "192.168.1.81";  //this is on RPi
@@ -18,6 +19,9 @@ const char* clientID = "ESP8266";
 // Initialise the WiFi and MQTT Client objects
 WiFiClient wifiClient;
 PubSubClient client(mqtt_server, 1883, wifiClient); // 1883 is the listener port for the Broker
+
+//function declarations
+void toggleLED(char updatedFrom);
 
 /*
  * This function will be called each time board receives a message.
@@ -31,15 +35,20 @@ void receivedMessage(char* topic, byte* payload, unsigned int length) {
   //Update the pin that controls the LED based on input message but only if it's a change
   //if the first character is a 1 then update the pin to be HIGH
   if (((char)payload[0] == '1') && (LEDStatus != 1)) {
+    //update the LED to be HIGH
     digitalWrite(ledOnOff, HIGH);   
+    
     //update the ledstatus variable
     LEDStatus = 1;
+    
    } else if (((char)payload[0] == '0')&& (LEDStatus != 0)){
+    //update the LED to be HIGH
     digitalWrite(ledOnOff, LOW);  
     LEDStatus = 0;
+    
   } else{
-    Serial.println("Invalid input");
-    }
+    Serial.println("Invalid input or redundant input");
+  }
 
 } //end messageCallback function definition
 
@@ -75,6 +84,7 @@ void setup() {
 
   //subscribe to messages of a topic mqtt_topicLED (from TW)
   client.subscribe(mqtt_topicLED);
+  
   //set the callBack function to message Received function to handled subscriptions
   client.setCallback(receivedMessage);
 
@@ -112,30 +122,35 @@ void loop() {
 
 delay(2000);
 
-  //allow for board button press to turn off LED and update TW to update the output pin
+  //allow for board button press to toggle the current state of the LED and tell TW
   //since the board and TW are both publishers and subscribers...TW will update based on publish
-  //and if it changes, it'll publish to board
-  /*
-if (digitalRead(ledPinStatus) == HIGH){  //this pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
-  //check current status of the pin
-  //do the opposite of the current status
-  if(LEDStatus == 1){
+  //TW will also resend a message but nothing will happen on the reception other than the printed result
+  
+  if (digitalRead(ledPinStatus) == HIGH){  //this pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
+    //check current status of the pin
+    //do the opposite of the current status
+    if(LEDStatus == 1){
       //turn-off the led
+       digitalWrite(ledOnOff, LOW);   
+    
+      //update the ledstatus variable
+      LEDStatus = 0;
+
+      //update TW with change
       client.publish(mqtt_topic, "0");
     }
     else{
       //turn-on the led
+       digitalWrite(ledOnOff, HIGH);   
+    
+      //update the ledstatus variable
+      LEDStatus = 1;
+
+     //update TW with change
       client.publish(mqtt_topic, "1");
       }
-}   
-*/
-/*
-if (digitalRead(buttonPin) == LOW){
-  Serial.println("switch is pressed");
-  client.publish(mqtt_topic, "Button pressed!");
-  digitalWrite(ledPin, LOW);
-}
-*/
+} //end digitalRead if   
+
 }  //end loop
 /*
 void sendUpdate(){
@@ -151,22 +166,24 @@ void sendUpdate(){
   Description:  Toggles the current state of the LED. 
   Inputs:  none
   Return:  none
-*/
-void toggleLED(){
+
+void toggleLED(char updatedFrom){
   Serial.println("toggling led w/ LEDStatus");
   Serial.println(LEDStatus);
-  //allow for board button press to turn off LED and update TW to update the output pin
-  //since the board and TW are both publishers and subscribers...TW will update based on publish
-  //and if it changes, it'll publish to board
+
+  //determine if this call was from TW or button press
+  if(updatedFrom == 'T'){
+    //toggle LED state and update the LED status
+    }
+
+  
   //button pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
-  if(LEDStatus == 1){
-    //there's a delay waiting for TW to turn-off pin - so we'll double
+  if(LEDStatus == 1){    
     //set the led to be off
      digitalWrite(ledOnOff, LOW);
-  //   Serial.println("Sending off message to TW");
-    // delay(500);
-    //turn-off the led
-      client.publish(mqtt_topicLED, "0");
+
+    //button press also uses this fn,
+        client.publish(mqtt_topicLED, "0");
     //  Serial.println("sent off message to TW");
     }
     else{
@@ -179,7 +196,7 @@ void toggleLED(){
       //Serial.println("sent on message to TW");
       }  
   }//end toggleLED
-
+*/
 
 
 /*
