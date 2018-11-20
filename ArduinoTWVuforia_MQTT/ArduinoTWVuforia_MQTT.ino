@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h> // Enables the ESP8266 to connect to the local network (via WiFi)
 #include <PubSubClient.h> // Allows us to connect to, and publish to the MQTT broker
 
-const int buttonPinStatus = D7; //pin to read if led is powered on - controlled by push button - input pin
+const int buttonPinStatus = D7; //pin to read from push button - input pin
 const int ledOnOff = D8;  //pin to write to for LED - output pin
 const int ledVoltage = D2;  //reads voltage on LED
 
@@ -62,7 +62,7 @@ void setup() {
   LEDStatus=0;
 
   //initialize the pins' modes
-  pinMode(buttonPinStatus, INPUT);  //pin that is read for LED's status
+  pinMode(buttonPinStatus, INPUT);  //pin that is read for Button press status - D7
 
  /*attach interrupt to the button pint status so that change will take affect immediately
    *issue with this is the interrupt is two edges! rising and falling because button clicked then released
@@ -71,12 +71,12 @@ void setup() {
   //attachInterrupt(buttonPinStatus, toggleLED, CHANGE);
 */
 
-  pinMode(ledOnOff, OUTPUT);  //pin that either powers on/off LED 
+  pinMode(ledOnOff, OUTPUT);  //pin that either powers on/off LED - pin D8
 
   //set the led to be off to start
   digitalWrite(ledOnOff, LOW);
 
-  pinMode(ledVoltage, INPUT);  //reads led voltage - pin D8
+//  pinMode(ledVoltage, INPUT);  //reads led voltage - pin D8
   //attachInterrupt(ledVoltage, sendUpdate, CHANGE);
 
   //connect board to wifi call with 10 second timeout
@@ -126,7 +126,7 @@ delay(2000);
   //since the board and TW are both publishers and subscribers...TW will update based on publish
   //TW will also resend a message but nothing will happen on the reception other than the printed result
   
-  if (digitalRead(ledPinStatus) == HIGH){  //this pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
+  if (digitalRead(buttonPinStatus) == HIGH){  //this pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
     //check current status of the pin
     //do the opposite of the current status
     if(LEDStatus == 1){
@@ -137,7 +137,7 @@ delay(2000);
       LEDStatus = 0;
 
       //update TW with change
-      client.publish(mqtt_topic, "0");
+      client.publish(mqtt_topicLED, "0");
     }
     else{
       //turn-on the led
@@ -147,7 +147,7 @@ delay(2000);
       LEDStatus = 1;
 
      //update TW with change
-      client.publish(mqtt_topic, "1");
+      client.publish(mqtt_topicLED, "1");
       }
 } //end digitalRead if   
 
@@ -227,7 +227,7 @@ boolean connectToWiFi(int timeout) {
   delay(10);
   //set mode of wifi to STA (station mode) b/c default has an access point setup
   WiFi.mode(WIFI_STA);
-  WiFi.begin("Why_Phi", "xxxxx");
+  WiFi.begin("Why_Phi", "bcalphathrutauweretaken");
 
   Serial.println("Connecting...");
 
