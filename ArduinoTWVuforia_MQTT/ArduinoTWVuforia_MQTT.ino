@@ -14,7 +14,7 @@ int LEDStatus;
 //int TWStatus;
 
 // MQTT broker setup
-const char* mqtt_server = "192.168.1.81";  //this is on RPi
+const char* mqtt_server = "xxx.xxx.x.xx";  //this is on RPi
 const char* mqtt_topicLED = "TWTestLED";  //this topic is related to the LED status
 const char* mqtt_topicLEDVoltage = "LEDVoltage"; //this topic is used for NodeMCU to publish voltages to TW
 const char* mqtt_topicSupplyVoltage = "SupplyVoltage"; //this topic is used for NodeMCU to publish voltages to TW
@@ -112,16 +112,6 @@ void setup() {
     Serial.println("Connection Failed!");
   }
 
-  /* Connect to MQTT Broker
-  // client.connect returns a boolean value to let us know if the connection was successful.
-  if (client.connect(clientID)) {
-    Serial.println("Connected to MQTT Broker!");   
-  }
-  else {
-    Serial.println("Connection to MQTT Broker failed...");
-  }  
-  */
-
 } //end setup
 
 
@@ -195,51 +185,6 @@ void sendVoltageUpdate(){
    }
    
   }
-/*
-void sendUpdate(){
-  int convert = digitalRead(ledVoltage);
-  char result[5];
-  sprintf(result, "%f", convert);
-  Serial.println(result);
-  //supplyVoltage and LED voltage
-  client.publish(mqtt_topicLEDVoltage, result); 
-  }
-*/
-/*
-  Description:  Toggles the current state of the LED. 
-  Inputs:  none
-  Return:  none
-
-void toggleLED(char updatedFrom){
-  Serial.println("toggling led w/ LEDStatus");
-  Serial.println(LEDStatus);
-
-  //determine if this call was from TW or button press
-  if(updatedFrom == 'T'){
-    //toggle LED state and update the LED status
-    }
-
-  
-  //button pin status is pulled to 0 with pull-down resistor - only goes high with held in button press
-  if(LEDStatus == 1){    
-    //set the led to be off
-     digitalWrite(ledOnOff, LOW);
-
-    //button press also uses this fn,
-        client.publish(mqtt_topicLED, "0");
-    //  Serial.println("sent off message to TW");
-    }
-    else{
-      //set the led to be on
-     digitalWrite(ledOnOff, HIGH);
-     // Serial.println("Sending on message to TW");
-    // delay(500);
-      //turn-on the led
-      client.publish(mqtt_topicLED, "1");
-      //Serial.println("sent on message to TW");
-      }  
-  }//end toggleLED
-*/
 
 
 /*
@@ -270,7 +215,7 @@ boolean connectToWiFi(int timeout) {
   delay(10);
   //set mode of wifi to STA (station mode) b/c default has an access point setup
   WiFi.mode(WIFI_STA);
-  WiFi.begin("Why_Phi", "bcalphathrutauweretaken");
+  WiFi.begin("xxx", "xxxpassword");
 
   Serial.println("Connecting...");
 
